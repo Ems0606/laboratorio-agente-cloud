@@ -1,5 +1,5 @@
 import unittest
-from tasks import agregar_tarea, completar_tarea, pendientes
+from tasks import agregar_tarea, completar_tarea, eliminar_tarea, pendientes
 
 class TestTasks(unittest.TestCase):
     def test_agregar_tarea(self):
@@ -33,6 +33,39 @@ class TestTasks(unittest.TestCase):
         agregar_tarea(tareas, "Leer documentación", "Estudio")
         agregar_tarea(tareas, "Comprar cuaderno", "Compras")
         self.assertEqual(pendientes(tareas, "Salud"), [])
+
+    def test_eliminar_tarea_existente_devuelve_tarea_eliminada(self):
+        tareas = []
+        agregar_tarea(tareas, "Leer documentación", "Estudio")
+        agregar_tarea(tareas, "Comprar cuaderno", "Compras")
+        eliminada = eliminar_tarea(tareas, 1)
+        self.assertEqual(eliminada["id"], 1)
+        self.assertEqual(len(tareas), 1)
+        self.assertEqual(tareas[0]["id"], 2)
+
+    def test_eliminar_tarea_id_inexistente_lanza_value_error(self):
+        tareas = []
+        agregar_tarea(tareas, "Leer documentación", "Estudio")
+        with self.assertRaisesRegex(ValueError, "Tarea no encontrada"):
+            eliminar_tarea(tareas, 99)
+
+    def test_eliminar_tarea_no_reindexa_ids_restantes(self):
+        tareas = []
+        agregar_tarea(tareas, "Tarea 1", "General")
+        agregar_tarea(tareas, "Tarea 2", "General")
+        agregar_tarea(tareas, "Tarea 3", "General")
+        eliminar_tarea(tareas, 2)
+        self.assertEqual([t["id"] for t in tareas], [1, 3])
+
+    def test_agregar_tarea_no_repite_id_despues_de_eliminar(self):
+        tareas = []
+        agregar_tarea(tareas, "Tarea 1", "General")
+        agregar_tarea(tareas, "Tarea 2", "General")
+        agregar_tarea(tareas, "Tarea 3", "General")
+        eliminar_tarea(tareas, 2)
+        nueva = agregar_tarea(tareas, "Tarea nueva", "General")
+        self.assertEqual(nueva["id"], 4)
+        self.assertEqual(sorted(t["id"] for t in tareas), [1, 3, 4])
 
 if __name__ == "__main__":
     unittest.main()
